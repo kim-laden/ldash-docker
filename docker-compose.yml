@@ -1,6 +1,7 @@
 name: ldash
 
 services:
+  # Demo sandbox for https://laden.no/docker/ldash/ — empty DB, own volume
   api:
     build: ./api
     image: ldash-api:local
@@ -8,11 +9,31 @@ services:
       LDASH_ACCOUNT_DATA: /data
       LDASH_ACCOUNT_VAULTS: /data/vaults
       LDASH_ACCOUNT_BIND: 0.0.0.0:8741
-      # Base of the vault.conf links the API hands back. Must be the public
-      # address of /docker/ldash/ldash on this stack.
       LDASH_ACCOUNT_PUBLIC: ${LDASH_PUBLIC_URL:-http://127.0.0.1:18084/docker/ldash/ldash}
     volumes:
       - ldash_data:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    networks:
+      - ldash
+
+  # MAIN account API for https://laden.no/ldash/ — copy of live data (not a bind of /var/lib/ldash)
+  api-main:
+    build: ./api
+    image: ldash-api:local
+    environment:
+      LDASH_ACCOUNT_DATA: /data
+      LDASH_ACCOUNT_VAULTS: /data/vaults
+      LDASH_ACCOUNT_BIND: 0.0.0.0:8741
+      LDASH_ACCOUNT_PUBLIC: https://laden.no/ldash
+    volumes:
+      - ldash_data_main:/data
+    ports:
+      - "127.0.0.1:8742:8741"
     read_only: true
     tmpfs:
       - /tmp
@@ -44,6 +65,8 @@ services:
 volumes:
   ldash_data:
     name: ldash_data
+  ldash_data_main:
+    name: ldash_data_main
 
 networks:
   ldash:
