@@ -16,6 +16,7 @@
   "use strict"
 
   const LIVE_BASE = "https://laden.no/ldash"
+  const LIVE_STANDBY = "https://laden.no/ldash-standby"
   const PAGE_DIR = location.pathname.replace(/[^/]*$/, "")
   const DEMO_BASE = location.origin + PAGE_DIR + "ldash"
   const PREFIX = "ldash-demo:"
@@ -86,6 +87,7 @@
   function demoAccountUrl(url) {
     const target = String(url || "").trim()
     if (target === LIVE_BASE || target.startsWith(LIVE_BASE + "/")) return DEMO_BASE + target.slice(LIVE_BASE.length)
+    if (target === LIVE_STANDBY || target.startsWith(LIVE_STANDBY + "/")) return DEMO_BASE + target.slice(LIVE_STANDBY.length)
     if (target.startsWith(location.origin + "/")) return target
     return ""
   }
@@ -157,6 +159,8 @@
       store.set("shortcut", String(p.shortcut || "Ctrl+`"))
       return { ok: true, note: "The global shortcut is a desktop feature." }
     },
+    windowSnap: () => ({ ok: true, mode: "off", supported: false }),
+    setWindowSnap: (p) => ({ ok: true, mode: String(p.mode || "off"), supported: false }),
     pauseMode: () => ({ ok: true, enabled: !!store.get("pauseMode", false) }),
     setPauseMode: (p) => {
       store.set("pauseMode", !!p.enabled)

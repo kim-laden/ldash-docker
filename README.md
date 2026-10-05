@@ -77,27 +77,34 @@ Production data lives in volume `ldash_data_main` (a copy of `/var/lib/ldash`, n
 
 ### Standby (systemd)
 
-The old `ldash-account` unit can stay on `127.0.0.1:8741` with `/var/lib/ldash` as standby. A timer can sync from `ldash_data_main` every 10 minutes. Failover back to systemd:
+The old `ldash-account` unit stays on `127.0.0.1:8741` with `/var/lib/ldash` as standby. A timer syncs from `ldash_data_main` every 10 minutes. Apache also exposes the standby for automatic client failover:
+
+- Primary: `https://laden.no/ldash/` → `127.0.0.1:8742` (Docker api-main)
+- Standby: `https://laden.no/ldash-standby/` → `127.0.0.1:8741` (systemd)
+
+Standby runs with `LDASH_ACCOUNT_READONLY=1` and `LDASH_ACCOUNT_PUBLIC=https://laden.no/ldash-standby`. Login and vault GET work; `/v1/register` and `PUT /v1/vault` return 503 so failover cannot silently diverge from main. Desktop/mobile clients try primary first, then standby on connection error, timeout, or 5xx (not on 401/403).
+
+Manual failover of the public `/ldash/` path back to systemd:
 
 ```bash
 sed -i 's#127.0.0.1:8742/#127.0.0.1:8741/#g' /etc/apache2/sites-enabled/000-default-le-ssl.conf \
   && apache2ctl configtest && systemctl reload apache2
 ```
 
-Switch Apache back to Docker main (`8742`) the same way. Only touch `/ldash/` ProxyPass lines — not `/docker/ldash/`.
+Switch Apache `/ldash/` back to Docker main (`8742`) the same way. Only touch `/ldash/` ProxyPass lines — not `/docker/ldash/` or `/ldash-standby/`.
 
 ## What is here
 
-- `api/server.py` — Ldash account service (Python 3.12, stdlib + SQLite).
+- `api/server.py` — Ldash account service (Python 3.12, stdlib + SQLite). Supports optional `LDASH_ACCOUNT_READONLY=1`.
 - `web/board/` — board as in the desktop app.
-- `web/demo/` — browser bridge on top (`demo-bridge.js` rewrites `https://laden.no/ldash` to this stack's `/docker/ldash/ldash/`).
+- `web/demo/` — browser bridge on top (`demo-bridge.js` rewrites `https://laden.no/ldash` and `https://laden.no/ldash-standby` to this stack's `/docker/ldash/ldash/`).
 - `web/nginx.conf` — serves `/docker/ldash/`; `/` redirects there.
 
 ## Browser demo notes
 
 Works: account create/login, calendar, sticky, journal, economy, weather, vault in localStorage, web-link programs.
 
-Desktop-only (shows "–" / disabled in the browser): live CPU/GPU metrics, launching local programs, device PAM lock, PDF export, Caleb AI chat, global shortcut.
+Desktop-only (shows "–" / disabled in the browser): live CPU/GPU metrics, launching local programs, device PAM lock, PDF export, Caleb AI chat, global shortcut, half-screen window dock.
 
 Use test data only. No secrets are stored in this repo.
 
