@@ -1,0 +1,50 @@
+name: ldash
+
+services:
+  api:
+    build: ./api
+    image: ldash-api:local
+    environment:
+      LDASH_ACCOUNT_DATA: /data
+      LDASH_ACCOUNT_VAULTS: /data/vaults
+      LDASH_ACCOUNT_BIND: 0.0.0.0:8741
+      # Base of the vault.conf links the API hands back. Must be the public
+      # address of /docker/ldash/ldash on this stack.
+      LDASH_ACCOUNT_PUBLIC: ${LDASH_PUBLIC_URL:-http://127.0.0.1:18084/docker/ldash/ldash}
+    volumes:
+      - ldash_data:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    networks:
+      - ldash
+
+  web:
+    build: ./web
+    image: ldash-web:local
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:${HOST_PORT:-18084}:80"
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    networks:
+      - ldash
+
+volumes:
+  ldash_data:
+    name: ldash_data
+
+networks:
+  ldash:
+    name: ldash

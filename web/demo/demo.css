@@ -1,0 +1,21 @@
+/* Demo-only note. Not part of the desktop board. */
+.ldash-demo-note {
+  position: fixed;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  z-index: 99999;
+  margin: 0;
+  max-width: calc(100vw - 24px);
+  padding: 6px 12px;
+  border: 1px solid rgba(0, 255, 157, 0.35);
+  border-radius: 6px;
+  background: rgba(8, 10, 14, 0.92);
+  color: #d7e2ee;
+  font: 12px/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  text-align: center;
+  pointer-events: auto;
+}
+.ldash-demo-note a {
+  color: #00ff9d;
+}
