@@ -1,0 +1,50 @@
+version: "3.8"
+
+# OPTIONAL — Laden VPS main+demo override. Do NOT use for a plain local Kali/Debian install.
+#
+#   docker compose -f docker-compose.yml -f compose.vps.yml up -d --build
+#   docker-compose -f docker-compose.yml -f compose.vps.yml up -d --build
+#
+# Adds api-main (production account copy on 127.0.0.1:8742 → Apache /ldash/).
+# The default compose still runs the demo api+web. This file does not replace
+# or stop the systemd standby at /var/lib/ldash; see README failover notes.
+
+services:
+  api:
+    environment:
+      LDASH_ACCOUNT_PUBLIC: ${LDASH_PUBLIC_URL:-https://laden.no/docker/ldash/ldash}
+
+  api-main:
+    build: ./api
+    image: ldash-api:local
+    environment:
+      LDASH_ACCOUNT_DATA: /data
+      LDASH_ACCOUNT_VAULTS: /data/vaults
+      LDASH_ACCOUNT_BIND: 0.0.0.0:8741
+      LDASH_ACCOUNT_PUBLIC: https://laden.no/ldash
+    volumes:
+      - ldash_data_main:/data
+    ports:
+      - "127.0.0.1:8742:8741"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8741/v1/health', timeout=4).status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    networks:
+      - ldash
+
+  web:
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:${HOST_PORT:-18084}:80"
+
+volumes:
+  ldash_data_main:
+    name: ldash_data_main

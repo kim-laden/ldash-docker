@@ -1,7 +1,13 @@
-name: ldash
+version: "3.8"
+
+# Standalone local stack. No laden.no dependency.
+# Works with: docker compose up -d --build
+#         and: docker-compose up -d --build
+# On Kali/Debian: sudo apt install -y docker.io docker-compose
+#
+# For the Laden VPS main+demo layout, also pass compose.vps.yml (see README).
 
 services:
-  # Demo sandbox for https://laden.no/docker/ldash/ — empty DB, own volume
   api:
     build: ./api
     image: ldash-api:local
@@ -12,28 +18,12 @@ services:
       LDASH_ACCOUNT_PUBLIC: ${LDASH_PUBLIC_URL:-http://127.0.0.1:18084/docker/ldash/ldash}
     volumes:
       - ldash_data:/data
-    read_only: true
-    tmpfs:
-      - /tmp
-    security_opt:
-      - no-new-privileges:true
-    restart: unless-stopped
-    networks:
-      - ldash
-
-  # MAIN account API for https://laden.no/ldash/ — copy of live data (not a bind of /var/lib/ldash)
-  api-main:
-    build: ./api
-    image: ldash-api:local
-    environment:
-      LDASH_ACCOUNT_DATA: /data
-      LDASH_ACCOUNT_VAULTS: /data/vaults
-      LDASH_ACCOUNT_BIND: 0.0.0.0:8741
-      LDASH_ACCOUNT_PUBLIC: https://laden.no/ldash
-    volumes:
-      - ldash_data_main:/data
-    ports:
-      - "127.0.0.1:8742:8741"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8741/v1/health', timeout=4).status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
     read_only: true
     tmpfs:
       - /tmp
@@ -47,10 +37,15 @@ services:
     build: ./web
     image: ldash-web:local
     depends_on:
-      api:
-        condition: service_healthy
+      - api
     ports:
       - "${BIND_ADDR:-127.0.0.1}:${HOST_PORT:-18084}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/docker/ldash/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
     read_only: true
     tmpfs:
       - /var/cache/nginx
@@ -65,8 +60,6 @@ services:
 volumes:
   ldash_data:
     name: ldash_data
-  ldash_data_main:
-    name: ldash_data_main
 
 networks:
   ldash:
