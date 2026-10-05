@@ -161,6 +161,42 @@
     },
     windowSnap: () => ({ ok: true, mode: "off", supported: false }),
     setWindowSnap: (p) => ({ ok: true, mode: String(p.mode || "off"), supported: false }),
+
+    detectDefaults: () => {
+      const ua = navigator.userAgent || ""
+      const platform =
+        /Android/i.test(ua) ? "android" :
+        /iPhone|iPad|iPod/i.test(ua) ? "iphone" :
+        /Mac/i.test(ua) ? "darwin" :
+        /Win/i.test(ua) ? "win32" :
+        /Linux/i.test(ua) ? "linux" : "browser"
+      const browserName = (
+        /Edg\//.test(ua) ? "Microsoft Edge" :
+        /Chrome\//.test(ua) && !/Edg\//.test(ua) ? "Chrome" :
+        /Firefox\//.test(ua) ? "Firefox" :
+        /Safari\//.test(ua) && !/Chrome\//.test(ua) ? "Safari" :
+        "This browser"
+      )
+      const home = "https://www.google.com"
+      return {
+        ok: true,
+        platform,
+        browser: { id: "navigator", name: browserName, command: home },
+        terminal: null,
+        browserChoices: [{ id: "navigator", name: browserName, command: home }],
+        terminalChoices: [],
+        terminalAvailable: false,
+        suggestions: false,
+        note: "Browser demo: OS guessed from navigator only.",
+      }
+    },
+    listInstalledApps: () => ({
+      ok: true,
+      platform: "browser",
+      apps: [],
+      suggestions: false,
+      note: "Installed-app suggestions are a desktop/Android feature.",
+    }),
     pauseMode: () => ({ ok: true, enabled: !!store.get("pauseMode", false) }),
     setPauseMode: (p) => {
       store.set("pauseMode", !!p.enabled)
