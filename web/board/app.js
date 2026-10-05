@@ -1269,7 +1269,10 @@ function paintMonitor() {
   if (!sys) {
     body.append(h("p", { class: "empty" }, ["Waiting for the host bridge…"]))
   } else {
-    if (show.cpu) body.append(metric("CPU", sys.cpuPct, "%", "host:cpu", visual, "var(--green)", sys.cpuPct == null ? "warming up" : sys.cpuCount + " cores"))
+    if (sys.browser) {
+      body.append(h("p", { class: "muted" }, [sys.note || "Not available in the browser"]))
+    }
+    if (show.cpu) body.append(metric("CPU", sys.cpuPct, "%", "host:cpu", visual, "var(--green)", sys.cpuPct == null ? (sys.browser ? "Not available in the browser" : "warming up") : sys.cpuCount + " cores"))
     if (show.temp) body.append(metric("CPU temp", sys.cpuTempC, "°C", "host:temp", visual, "var(--amber)"))
     if (show.mem) body.append(metric("Memory", sys.memPct, "%", "host:mem", visual, "var(--cyan)", gib(sys.memUsed) + " / " + gib(sys.memTotal) + " GiB"))
     if (show.load) body.append(metric("Load", sys.load1, "", "host:load", "readout", "var(--violet)", sys.load5 + " · " + sys.load15))

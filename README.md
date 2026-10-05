@@ -49,7 +49,7 @@ Works in the browser:
 
 Desktop only, and switched off in the demo:
 
-- The system monitor (CPU, memory, load, GPU), the process and window pickers, and app or window monitors. A browser cannot read them.
+- Live CPU, memory, load and GPU numbers. The system call returns ok with null metrics, so the board shows "–" and a short "Not available in the browser" note instead of an error. Process and window pickers stay empty for the same reason.
 - Launching programs or commands, opening folders, and the terminal button.
 - The local password check. With no device password, the vault uses the account password, or the username `demo` as the fallback, like the desktop app does without PAM.
 - PDF export for cases and budgets.

@@ -10,7 +10,7 @@
  *    under <page>/ldash/ instead,
  *  - the vault workspace and vault.conf live in this browser's localStorage,
  *  - programs and the open-path button only open web links in a new tab,
- *  - system, process and window monitors have nothing to read and stay empty.
+ *  - system metrics return null (board shows "–" / not available in the browser); process and window lists stay empty.
  */
 (() => {
   "use strict"
@@ -165,7 +165,25 @@
     localUser: () => ({ ok: true, username: DEMO_USER, homedir: "browser:/", uid: 1000 }),
     // No PAM in a browser. Same rule as the desktop fallback: the username.
     verifyPassword: (p) => ({ ok: String(p.password || "") === DEMO_USER, method: "username-fallback" }),
-    system: () => ({ ok: false, error: "System monitor needs the desktop app. A browser cannot read CPU, memory or GPU." }),
+    // No host bridge in the browser. Return ok with null metrics so the board
+    // shows "–" instead of an error banner. Temps stay null; never invent numbers.
+    system: () => ({
+      ok: true,
+      hostname: "browser",
+      cpuCount: null,
+      cpuPct: null,
+      cpuTempC: null,
+      memTotal: null,
+      memUsed: null,
+      memPct: null,
+      load1: null,
+      load5: null,
+      load15: null,
+      gpuPct: null,
+      gpuTempC: null,
+      browser: true,
+      note: "Not available in the browser",
+    }),
     processes: () => ({ ok: true, groups: [] }),
     windows: () => ({ ok: true, windows: [] }),
     watchApp: () => ({ ok: false, error: DESKTOP_ONLY }),
